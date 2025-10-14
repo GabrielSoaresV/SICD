@@ -112,13 +112,14 @@
         </div>
 
         <div class="chat-input">
-          <input
-            type="text"
-            [(ngModel)]="newMessage"
-            placeholder="Digite sua mensagem..."
-            (keyup.enter)="sendMessage()"
-            [disabled]="sendingMessage"
-          />
+        <input
+          type="text"
+          [(ngModel)]="newMessage"
+          placeholder="Digite sua mensagem..."
+          [disabled]="sendingMessage"
+        />
+        <!-- (keyup.enter)="sendMessage()" desabilitado temporariamente -->
+
           <button
             (click)="sendMessage()"
             [disabled]="!newMessage.trim() || sendingMessage"

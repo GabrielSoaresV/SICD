@@ -57,18 +57,8 @@ export class CitizensComponent implements OnInit {
 
 
   async viewCitizen(citizen: Citizen) {
-    this.selectedCitizen = citizen;
-    this.showModal = true;
-    this.loadingDemands = true;
-
-    try {
-      this.citizenDemands = await this.demandsService.getDemandsByCitizen(citizen.cpf);
+ 
       console.log('Demandas do cidadão:', this.citizenDemands);
-    } catch (error) {
-      console.error('Erro ao carregar demandas:', error);
-    } finally {
-      this.loadingDemands = false;
-    }
   }
 
   closeModal() {

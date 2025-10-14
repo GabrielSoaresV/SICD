@@ -2,8 +2,9 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { NavbarComponent } from '../navbar/navbar.component';
-import { DemandsService } from '../../services/demands.service';
-import { Demand } from '../../models/types';
+import { RealDemanda } from '../../services/real-demanda.service';
+import { lastValueFrom } from 'rxjs';
+import { DemandaDTO } from '../../dtos/demanda.dto';
 
 @Component({
   selector: 'app-dashboard',
@@ -13,13 +14,13 @@ import { Demand } from '../../models/types';
   styleUrls: ['./dashboard.component.css']
 })
 export class DashboardComponent implements OnInit {
-  demands: Demand[] = [];
-  filteredDemands: Demand[] = [];
+  demands: DemandaDTO[] = [];
+  filteredDemands: DemandaDTO[] = [];
   loading = true;
   selectedStatus = 'all';
 
   constructor(
-    private demandsService: DemandsService,
+    private realDemanda: RealDemanda,
     private router: Router
   ) {}
 
@@ -27,55 +28,48 @@ export class DashboardComponent implements OnInit {
     await this.loadDemands();
   }
 
+  // Função que realmente carrega os dados do backend
   async loadDemands() {
     try {
       this.loading = true;
-      this.demands = await this.demandsService.getAllDemands();
-      this.filterDemands();
+
+      // Chama o serviço real e transforma Observable em Promise
+      this.demands = await lastValueFrom(this.realDemanda.getAllDemands());
+
+      // Para compatibilidade com o HTML
+      this.filteredDemands = this.demands;
+
+      console.log('Demandas carregadas do backend (DTO):', this.demands);
+
     } catch (error) {
-      console.error('Erro ao carregar demandas:', error);
+      console.error('Erro ao carregar demandas do backend:', error);
     } finally {
       this.loading = false;
     }
   }
 
+  // Métodos para não quebrar o template (apenas log)
   filterDemands() {
-    if (this.selectedStatus === 'all') {
-      this.filteredDemands = this.demands;
-    } else {
-      this.filteredDemands = this.demands.filter(d => d.status === this.selectedStatus);
-    }
+    console.log('filterDemands chamado');
   }
 
   onFilterChange(status: string) {
-    this.selectedStatus = status;
-    this.filterDemands();
+    console.log('onFilterChange chamado para status:', status);
   }
 
-  viewDemand(demandId: string) {
-    this.router.navigate(['/demand', demandId]);
+  viewDemand(demandId: number) {
+    console.log('viewDemand chamado para demandId:', demandId);
   }
 
   getStatusText(status: string): string {
-    const statusMap: Record<string, string> = {
-      'pending': 'Pendente',
-      'in_progress': 'Em Andamento',
-      'completed': 'Concluída',
-      'cancelled': 'Cancelada'
-    };
-    return statusMap[status] || status;
+    return status;
   }
 
   getPriorityText(priority: string): string {
-    const priorityMap: Record<string, string> = {
-      'low': 'Baixa',
-      'medium': 'Média',
-      'high': 'Alta'
-    };
-    return priorityMap[priority] || priority;
+    return 'Média';
   }
 
   formatDate(date: string): string {
-    return new Date(date).toLocaleDateString('pt-BR');
+    return new Date().toLocaleDateString('pt-BR');
   }
 }

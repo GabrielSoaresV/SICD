@@ -45,20 +45,23 @@
         <span class="demand-status" [class]="demand.status">
           {{ getStatusText(demand.status) }}
         </span>
-        <span class="demand-priority" [class]="demand.priority">
+        <!-- <span class="demand-priority" [class]="demand.priority">
           {{ getPriorityText(demand.priority) }}
-        </span>
+        </span> -->
       </div>
 
-      <h3 class="demand-title">{{ demand.title }}</h3>
-      <p class="demand-description">{{ demand.description }}</p>
+      <h3 class="demand-title">{{ demand.titulo }}</h3>
+      <p class="demand-description">{{ demand.descricao }}</p>
 
       <div class="demand-footer">
-        <div class="demand-citizen">
+        <!-- <div class="demand-citizen">
           <strong>Cidadão:</strong> {{ demand.citizen?.name }}
         </div>
         <div class="demand-date">
           {{ formatDate(demand.created_at) }}
+        </div> -->
+        <div class="demand-citizen">
+          <strong>CPF:</strong> {{ demand.cpfCidadao }}
         </div>
       </div>
     </div>

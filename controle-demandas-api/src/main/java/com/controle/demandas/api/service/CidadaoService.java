@@ -1,4 +1,5 @@
 package com.controle.demandas.api.service;
+
 import com.controle.demandas.api.dtoCidadaos.*;
 import com.controle.demandas.api.exception.CidadaoException;
 import com.controle.demandas.api.exception.NotFoundException;
@@ -47,12 +48,9 @@ public class CidadaoService {
     }
 
     public Cidadao atualizarCidadao(String cpf, CidadaoUpdateDTO dto) {
-        Cidadao existente = cidadaoRepository.findById(cpf)
-                .orElseThrow(() -> new RuntimeException("Cidadão não encontrado"));
-
+        Cidadao existente = buscarPorCpfEntity(cpf);
         existente.setNome(dto.getNome());
         existente.setEmail(dto.getEmail());
-
         return cidadaoRepository.save(existente);
     }
 

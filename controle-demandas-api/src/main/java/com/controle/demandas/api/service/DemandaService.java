@@ -5,7 +5,11 @@ import com.controle.demandas.api.exception.DemandaException;
 import com.controle.demandas.api.exception.NotFoundException;
 import com.controle.demandas.api.model.Cidadao;
 import com.controle.demandas.api.model.Demanda;
+import com.controle.demandas.api.model.DemandaHistorico;
+import com.controle.demandas.api.model.Usuario;
+import com.controle.demandas.api.repository.DemandaHistoricoRepository;
 import com.controle.demandas.api.repository.DemandaRepository;
+import com.controle.demandas.api.repository.UsuarioRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -21,6 +25,14 @@ public class DemandaService {
     @Autowired
     private CidadaoService cidadaoService;
 
+    @Autowired
+    private UsuarioRepository usuarioRepository;
+
+    @Autowired
+    private DemandaHistoricoRepository historicoRepository;
+
+    // -------------------- DEMANDAS CRUD --------------------
+
     public Demanda criarDemanda(DemandaCreateDTO dto) {
         Cidadao cidadao = cidadaoService.buscarPorCpfEntity(dto.getCpfCidadao());
 
@@ -29,9 +41,12 @@ public class DemandaService {
                 .descricao(dto.getDescricao())
                 .status("Aberta")
                 .cidadao(cidadao)
+                .assignedTo(null)
                 .build();
 
-        return demandaRepository.save(demanda);
+        Demanda nova = demandaRepository.save(demanda);
+        registrarHistorico(nova, null, "Aberta", "created", null, null);
+        return nova;
     }
 
     public List<DemandaSearchDTO> listarTodasDemandas() {
@@ -60,51 +75,7 @@ public class DemandaService {
         Demanda demanda = buscarPorIdEntity(id);
         demanda.setTitulo(dto.getTitulo());
         demanda.setDescricao(dto.getDescricao());
-        return demandaRepository.save(demanda);
-    }
-
-    public Demanda alterarStatus(Long id, DemandaStatusDTO dto) {
-        Demanda demanda = buscarPorIdEntity(id);
-        String acao = dto.getStatus().toLowerCase();
-
-        switch (acao) {
-            case "atender":
-                if (demanda.getStatus().equals("Aberta") || demanda.getStatus().equals("Não Concluída")) {
-                    demanda.setStatus("Em Andamento");
-                } else {
-                    throw new DemandaException.DemandaForbiddenException(
-                            "Só é possível atender uma demanda que está Aberta ou Não Concluída");
-                }
-                break;
-
-            case "finalizar":
-                if (!demanda.getStatus().equals("Em Andamento")) {
-                    throw new DemandaException.DemandaForbiddenException(
-                            "Só é possível finalizar uma demanda que está Em Andamento");
-                }
-                demanda.setStatus("Concluída");
-                break;
-
-            case "cancelar":
-                if (!demanda.getStatus().equals("Aberta")) {
-                    throw new DemandaException.DemandaForbiddenException(
-                            "Só é possível cancelar uma demanda que está Aberta");
-                }
-                demanda.setStatus("Cancelada");
-                break;
-
-            case "devolver":
-                if (!demanda.getStatus().equals("Em Andamento")) {
-                    throw new DemandaException.DemandaForbiddenException(
-                            "Só é possível devolver uma demanda que está Em Andamento");
-                }
-                demanda.setStatus("Não Concluída");
-                break;
-
-            default:
-                throw new DemandaException.DemandaForbiddenException("Ação de status inválida");
-        }
-
+        registrarHistorico(demanda, null, null, "updated", null, null);
         return demandaRepository.save(demanda);
     }
 
@@ -130,5 +101,90 @@ public class DemandaService {
                 .status(d.getStatus())
                 .cpfCidadao(d.getCidadao().getCpf())
                 .build();
+    }
+
+    // -------------------- HISTÓRICO --------------------
+
+    public List<DemandaHistorico> listarHistorico(Long demandaId) {
+        return historicoRepository.findByDemandaId(demandaId);
+    }
+
+    private void registrarHistorico(Demanda demanda, String oldStatus, String newStatus,
+                                    String acao, String notes, Usuario usuario) {
+        DemandaHistorico historico = DemandaHistorico.builder()
+                .demanda(demanda)
+                .usuario(usuario)
+                .acao(acao)
+                .oldStatus(oldStatus)
+                .newStatus(newStatus)
+                .notes(notes)
+                .build();
+        historicoRepository.save(historico);
+    }
+
+    // -------------------- FLUXO DE ATENDIMENTO CENTRALIZADO --------------------
+
+    /**
+     * Método centralizado que permite atender, finalizar, devolver ou cancelar uma demanda,
+     * atribuindo o usuário responsável e registrando o histórico.
+     *
+     * @param demandaId ID da demanda
+     * @param usuarioId ID do usuário que realizará a ação
+     * @param acao      "atender", "finalizar", "devolver" ou "cancelar"
+     * @param notes     Observações opcionais para o histórico
+     * @return Demanda atualizada
+     */
+    public Demanda atenderDemanda(Long demandaId, Long usuarioId, String acao, String notes) {
+        Demanda demanda = buscarPorIdEntity(demandaId);
+        Usuario usuario = usuarioRepository.findById(usuarioId)
+                .orElseThrow(() -> new NotFoundException("Usuário não encontrado"));
+
+        String oldStatus = demanda.getStatus();
+
+        switch (acao.toLowerCase()) {
+            case "atender":
+                if (oldStatus.equals("Aberta") || oldStatus.equals("Não Concluída")) {
+                    demanda.setStatus("Em Andamento");
+                } else {
+                    throw new DemandaException.DemandaForbiddenException(
+                            "Só é possível atender uma demanda que está Aberta ou Não Concluída");
+                }
+                break;
+
+            case "finalizar":
+                if (!oldStatus.equals("Em Andamento")) {
+                    throw new DemandaException.DemandaForbiddenException(
+                            "Só é possível finalizar uma demanda que está Em Andamento");
+                }
+                demanda.setStatus("Concluída");
+                break;
+
+            case "cancelar":
+                if (!oldStatus.equals("Aberta")) {
+                    throw new DemandaException.DemandaForbiddenException(
+                            "Só é possível cancelar uma demanda que está Aberta");
+                }
+                demanda.setStatus("Cancelada");
+                break;
+
+            case "devolver":
+                if (!oldStatus.equals("Em Andamento")) {
+                    throw new DemandaException.DemandaForbiddenException(
+                            "Só é possível devolver uma demanda que está Em Andamento");
+                }
+                demanda.setStatus("Não Concluída");
+                break;
+
+            default:
+                throw new DemandaException.DemandaForbiddenException("Ação de status inválida");
+        }
+
+        // Atribui o usuário responsável
+        demanda.setAssignedTo(usuario);
+
+        // Salva histórico
+        registrarHistorico(demanda, oldStatus, demanda.getStatus(), "atendimento", notes, usuario);
+
+        return demandaRepository.save(demanda);
     }
 }

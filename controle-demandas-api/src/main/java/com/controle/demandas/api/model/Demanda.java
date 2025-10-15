@@ -1,7 +1,6 @@
 package com.controle.demandas.api.model;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
-
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import lombok.*;
@@ -30,4 +29,10 @@ public class Demanda {
     @JsonBackReference
     private Cidadao cidadao;
 
+    @ManyToOne
+    @JoinColumn(name = "assigned_to")
+    private Usuario assignedTo;
+
+    @Column(name = "notes", columnDefinition = "TEXT")
+    private String notes;
 }

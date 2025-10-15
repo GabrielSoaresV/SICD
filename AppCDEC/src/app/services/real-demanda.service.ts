@@ -14,10 +14,10 @@ export class RealDemanda {
   constructor(private http: HttpClient) {}
 
   // Lista todas as demandas
-getAllDemands(): Observable<DemandaDTO[]> {
-    return this.http.get<ApiResponse<DemandaDTO[]>>(this.apiUrl)
-      .pipe(map(response => response.data));
-  }
+  getAllDemands(): Observable<DemandaDTO[]> {
+      return this.http.get<ApiResponse<DemandaDTO[]>>(this.apiUrl)
+        .pipe(map(response => response.data));
+    }
 
   getDemandById(id: string): Observable<DemandaDTO> {
     return this.http.get<ApiResponse<DemandaDTO>>(`${this.apiUrl}/${id}`)

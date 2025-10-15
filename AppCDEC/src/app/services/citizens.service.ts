@@ -1,10 +1,11 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Citizen } from '../models/types';
+import { Citizen, CitizenDemand } from '../models/types';
 import { Observable } from 'rxjs';
 import { CidadaoDTO } from '../dtos/cidadao.dto';
 import { ApiResponse } from '../response/api-response.dto';
 import { map } from 'rxjs/operators';
+import { DemandaDTO } from '../dtos/demanda.dto';
 
 @Injectable({
   providedIn: 'root'
@@ -22,6 +23,12 @@ export class CitizensService {
   getCitizenById(id: string): Observable<Citizen> {
     console.log('CitizensService.getCitizenById chamado para ID:', id);
     return this.http.get<Citizen>(`${this.apiUrl}/${id}`);
+  }
+
+  getDemandsByCitizen(cpf: string): Observable<CitizenDemand[]> {
+    return this.http
+      .get<ApiResponse<CitizenDemand[]>>(`${this.apiUrl}demandas/cidadao/${cpf}`)
+      .pipe(map(response => response.data));
   }
 
   createCitizen(citizen: Omit<Citizen, 'id' | 'created_at'>): Observable<Citizen> {

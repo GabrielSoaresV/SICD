@@ -2,12 +2,13 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { NavbarComponent } from '../navbar/navbar.component';
 import { CitizensService } from '../../services/citizens.service';
-import { DemandsService } from '../../services/demands.service';
+import { RealDemanda } from '../../services/real-demanda.service';
 import { Citizen, Demand } from '../../models/types';
 import { HttpClientModule } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { CidadaoDTO } from '../../dtos/cidadao.dto';
+import { CitizenDemand } from '../../models/types';
 
 @Component({
   selector: 'app-citizens',
@@ -19,15 +20,15 @@ import { CidadaoDTO } from '../../dtos/cidadao.dto';
 export class CitizensComponent implements OnInit {
   citizens: Citizen[] = [];
   loading = true;
+
   showModal = false;
   selectedCitizen: Citizen | null = null;
-  citizenDemands: Demand[] = [];
+  citizenDemands: CitizenDemand[] = [];
   loadingDemands = false;
 
   constructor(
     private citizensService: CitizensService,
-    private demandsService: DemandsService
-  ) {}
+    private realDemanda: RealDemanda  ) {}
 
   async ngOnInit() {
     await this.loadCitizens();
@@ -37,10 +38,11 @@ export class CitizensComponent implements OnInit {
     try {
       this.loading = true;
 
-      // Recebe os DTOs do backend
-      const dtoList: CidadaoDTO[] = await firstValueFrom(this.citizensService.getAllCitizens());
+      const dtoList: CidadaoDTO[] = await firstValueFrom(
+        this.citizensService.getAllCitizens()
+      );
 
-      // Converte os DTOs para Citizen apenas com os campos disponíveis
+      // Converte DTOs para Citizen
       this.citizens = dtoList.map(dto => ({
         name: dto.nome || '',
         email: dto.email || '',
@@ -55,10 +57,31 @@ export class CitizensComponent implements OnInit {
     }
   }
 
-
   async viewCitizen(citizen: Citizen) {
- 
+    if (!citizen.cpf) return;
+
+    this.selectedCitizen = citizen;
+    this.showModal = true;
+    this.loadingDemands = true;
+
+    try {
+      const demands = await firstValueFrom(
+        this.realDemanda.getDemandsByCitizen(citizen.cpf)
+      );
+
+      // Exibe só título, descrição e status
+      this.citizenDemands = demands.map(d => ({
+        title: d.titulo,
+        description: d.descricao,
+        status: d.status
+      }));
+
       console.log('Demandas do cidadão:', this.citizenDemands);
+    } catch (error) {
+      console.error('Erro ao carregar demandas:', error);
+    } finally {
+      this.loadingDemands = false;
+    }
   }
 
   closeModal() {

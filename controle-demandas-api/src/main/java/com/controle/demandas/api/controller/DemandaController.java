@@ -42,7 +42,7 @@ public class DemandaController {
         ));
     }
 
-    @GetMapping("/cidadao/{cpf}")
+    @GetMapping("demandas/cidadao/{cpf}")
     public ResponseEntity<ApiResponse<List<DemandaSearchDTO>>> listarPorCidadao(@PathVariable String cpf) {
         List<DemandaSearchDTO> lista = demandaService.listarPorCidadao(cpf);
         return ResponseEntity.ok(ApiResponse.success(

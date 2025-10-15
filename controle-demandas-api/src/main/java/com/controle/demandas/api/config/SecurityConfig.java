@@ -21,7 +21,10 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
             .cors(cors -> cors.configurationSource(corsConfigurationSource))
-            .authorizeHttpRequests(auth -> auth.anyRequest().permitAll());
+            .csrf(csrf -> csrf.disable()) // 🚨 desativa o CSRF para evitar 403 em POST/PUT/DELETE
+            .authorizeHttpRequests(auth -> auth
+                .anyRequest().permitAll()
+            );
 
         return http.build();
     }

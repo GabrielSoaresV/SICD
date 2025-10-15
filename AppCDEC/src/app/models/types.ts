@@ -55,3 +55,9 @@ export interface DemandHistory {
   created_at: string;
   user?: Profile;
 }
+
+export interface CitizenDemand {
+  title: string;
+  description: string;
+  status: string;
+}

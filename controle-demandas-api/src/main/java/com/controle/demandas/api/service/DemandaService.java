@@ -43,7 +43,7 @@ public class DemandaService {
     public List<DemandaSearchDTO> listarPorCidadao(String cpf) {
         cidadaoService.buscarPorCpfEntity(cpf);
         return demandaRepository.findByCidadaoCpf(cpf).stream()
-                .map(this::mapToSearchDTO)
+                .map(this::mapToSearchDTO) 
                 .collect(Collectors.toList());
     }
 

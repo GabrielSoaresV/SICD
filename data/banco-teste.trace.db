@@ -1,6 +1,0 @@
-2025-10-09 16:44:57.650553-03:00 jdbc[3]: exception
-org.h2.jdbc.JdbcSQLDataException: Value too long for column "CPF CHARACTER VARYING(11)": "'123456783904' (12)"; SQL statement:
-insert into cidadao (email,nome,cpf) values (?,?,?) [22001-232]
-2025-10-15 10:46:35.770308-03:00 jdbc[3]: exception
-org.h2.jdbc.JdbcSQLDataException: Value too long for column "AVATAR_URL CHARACTER VARYING(255)": "'https://www.google.com/imgres?q=imagem%20png&imgurl=https%3A%2F%2Fimg.cdndsgni.... (331)"; SQL statement:
-insert into usuarios (avatar_url,created_at,email,nome,role,senha,updated_at,id) values (?,?,?,?,?,?,?,default) [22001-232]
